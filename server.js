@@ -308,4 +308,14 @@ Respond ONLY with this JSON object and no other text. Do not use markdown backti
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  const { exec } = require('child_process');
+  const url = `http://localhost:${PORT}/admin.html`;
+  console.log(`Auto-opening Admin Dashboard at ${url} ...`);
+  if (process.platform === 'win32') {
+    exec(`start ${url}`);
+  } else if (process.platform === 'darwin') {
+    exec(`open ${url}`);
+  } else {
+    exec(`xdg-open ${url}`);
+  }
 });
