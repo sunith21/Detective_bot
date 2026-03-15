@@ -9,8 +9,16 @@ const processingIndicator = document.getElementById('processing-indicator');
 const dossierModal = document.getElementById('dossier-modal');
 const soundBtn = document.getElementById('sound-btn');
 
+const lobbyContainer = document.getElementById('lobby-container');
+const gameContainer = document.getElementById('game-container');
+const callsignInput = document.getElementById('callsign-input');
+const requestAccessBtn = document.getElementById('request-access-btn');
+const lobbyStatus = document.getElementById('lobby-status');
+
 let sessionId = null;
 let isGameOver = false;
+let userCallsign = null;
+let pollInterval = null;
 
 // Audio toggle
 soundBtn.addEventListener('click', () => {
@@ -228,4 +236,77 @@ Motive: ${m}`;
     sendMessage(finalPayload);
 });
 
-window.onload = startSession;
+// --- Lobby Logic ---
+requestAccessBtn.addEventListener('click', async () => {
+    const callsign = callsignInput.value.trim();
+    if (!callsign) {
+        lobbyStatus.textContent = "Error: Callsign cannot be empty.";
+        return;
+    }
+
+    requestAccessBtn.disabled = true;
+    callsignInput.disabled = true;
+    lobbyStatus.textContent = "Transmitting request to Admin...";
+
+    try {
+        const res = await fetch('/api/request-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callsign })
+        });
+        const data = await res.json();
+        
+        if (data.status === 'approved') {
+            grantAccess();
+        } else if (data.status === 'pending') {
+            userCallsign = data.cleanSign;
+            lobbyStatus.textContent = `Request pending for '${userCallsign}'. Awaiting Admin approval...`;
+            pollInterval = setInterval(checkAccess, 3000);
+        } else {
+            lobbyStatus.textContent = data.error || "Connection failed.";
+            resetLobby();
+        }
+    } catch (e) {
+        lobbyStatus.textContent = "Network error trying to reach server.";
+        resetLobby();
+    }
+});
+
+async function checkAccess() {
+    if (!userCallsign) return;
+    
+    try {
+        const res = await fetch(`/api/check-access?callsign=${userCallsign}`);
+        const data = await res.json();
+        
+        if (data.status === 'approved') {
+            clearInterval(pollInterval);
+            grantAccess();
+        } else if (data.status === 'denied') {
+            clearInterval(pollInterval);
+            lobbyStatus.textContent = "ACCESS DENIED BY ADMIN.";
+            resetLobby();
+            setTimeout(() => { lobbyStatus.textContent = ""; }, 5000);
+        }
+        // If 'pending', do nothing, just keep polling
+    } catch (e) {
+        console.error("Polling error", e);
+    }
+}
+
+function grantAccess() {
+    lobbyContainer.style.display = 'none';
+    gameContainer.style.display = 'flex';
+    audioCore.playBlip(); // Initialize audio context on this click
+    startSession();
+}
+
+function resetLobby() {
+    requestAccessBtn.disabled = false;
+    callsignInput.disabled = false;
+    userCallsign = null;
+    if (pollInterval) clearInterval(pollInterval);
+}
+
+// Do not auto-start session anymore, wait for lobby approval.
+// window.onload = startSession;

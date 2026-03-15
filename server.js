@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const readline = require('readline');
 const cases = require('./cases');
 
 dotenv.config();
@@ -12,6 +13,32 @@ app.use(express.static('public'));
 
 // In-memory sessions (for demo purposes)
 const sessions = {};
+const pendingRequests = new Set();
+const approvedUsers = new Set();
+
+// Set up CLI admin interface
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+rl.on('line', (input) => {
+  const parts = input.trim().split(' ');
+  if (parts.length === 2 && parts[0].toLowerCase() === 'approve') {
+    const callsign = parts[1];
+    if (pendingRequests.has(callsign)) {
+      pendingRequests.delete(callsign);
+      approvedUsers.add(callsign);
+      console.log(`\n[SUCCESS] Access granted to '${callsign}'. They can now play.\n`);
+    } else {
+      console.log(`\n[ERROR] No pending request found for '${callsign}'.\n`);
+    }
+  } else if (parts[0].toLowerCase() === 'deny') {
+      const callsign = parts[1];
+      pendingRequests.delete(callsign);
+      console.log(`\n[DENIED] Request from '${callsign}' was rejected.\n`);
+  }
+});
 
 // We will communicate with the local Ollama instance on port 11434
 const OLLAMA_URL = 'http://127.0.0.1:11434/api/chat';
@@ -45,6 +72,42 @@ Scene Details: ${game.caseData.sceneDetails}
 Clues: ${game.caseData.clues}
 Red Herrings: ${game.caseData.redHerrings}`;
 }
+
+app.post('/api/request-access', (req, res) => {
+  const { callsign } = req.body;
+  
+  if (!callsign || callsign.trim() === '') {
+      return res.status(400).json({ error: "Invalid callsign." });
+  }
+  
+  const cleanSign = callsign.trim().replace(/\s+/g, '_');
+  
+  if (approvedUsers.has(cleanSign)) {
+      return res.json({ status: 'approved', cleanSign });
+  }
+
+  pendingRequests.add(cleanSign);
+  console.log(`\n======================================================`);
+  console.log(`[ADMIN ALERT] New connection request from: ${cleanSign}`);
+  console.log(`-> To authorize this player, type in this terminal:`);
+  console.log(`   approve ${cleanSign}`);
+  console.log(`-> To deny, type: deny ${cleanSign}`);
+  console.log(`======================================================\n`);
+  
+  res.json({ status: 'pending', cleanSign });
+});
+
+app.get('/api/check-access', (req, res) => {
+  const { callsign } = req.query;
+  
+  if (approvedUsers.has(callsign)) {
+      res.json({ status: 'approved' });
+  } else if (pendingRequests.has(callsign)) {
+      res.json({ status: 'pending' });
+  } else {
+      res.json({ status: 'denied' });
+  }
+});
 
 app.post('/api/start', async (req, res) => {
   const sessionId = Date.now().toString();

@@ -411,28 +411,46 @@ input[type="text"]::placeholder {
 
 /* Mobile Responsiveness */
 @media (max-width: 600px) {
-    .dossier-grid {
-        grid-template-columns: 1fr;
+    body {
+        align-items: flex-start;
+        padding-top: 10px;
     }
-    
-    .final-form {
-        grid-template-columns: 1fr;
+    .terminal-container {
+        padding: 10px;
+        height: 96vh;
+        width: 95%;
     }
-    
+    .terminal-header h1 {
+        font-size: 1.2rem;
+    }
+    .stats {
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.8rem;
+    }
+    .stats span {
+        white-space: nowrap;
+    }
+    .instructions {
+        font-size: 0.7rem;
+    }
+    .dossier-grid, .final-form {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
     .final-actions {
         grid-column: span 1;
         flex-direction: column;
         gap: 10px;
     }
-    
-    .terminal-container {
-        padding: 10px;
-        height: 98vh;
-        width: 95%;
+    .final-form input, select {
+        font-size: 16px; /* Prevents iOS auto-zoom */
     }
-    
-    .stats {
+    .input-area {
         flex-wrap: wrap;
-        gap: 5px;
+    }
+    #user-input {
+        width: 100%;
+        margin-bottom: 10px;
     }
 }

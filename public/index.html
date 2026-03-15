@@ -8,9 +8,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="terminal-container">
+    <!-- Approval Lobby -->
+    <div id="lobby-container" class="dossier-modal" style="display: flex;">
+        <div class="dossier-content" style="text-align: center; max-width: 500px;">
+            <h2 class="dossier-title glitch" data-text="UNAUTHORIZED ACCESS">UNAUTHORIZED ACCESS</h2>
+            <p style="margin: 20px 0;">CONNECTION TO CORRUPTED MEMORY CORE REQUIRES ADMIN APPROVAL.</p>
+            <p style="color: var(--accent-color); margin-bottom: 20px;">ENTER INVESTIGATOR CALLSIGN:</p>
+            
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="callsign-input" placeholder="e.g. Detective01" style="flex-grow: 1; padding: 10px; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-color); color: var(--accent-color); font-family: inherit; font-size: 1.1rem; text-transform: uppercase;">
+                <button id="request-access-btn" class="active">TRANSMIT</button>
+            </div>
+            
+            <p id="lobby-status" style="margin-top: 20px; color: var(--error-color); font-style: italic; min-height: 20px;"></p>
+        </div>
+    </div>
+
+    <!-- Main Game Terminal -->
+    <div id="game-container" class="terminal-container" style="display: none;">
         <header class="terminal-header">
-            <h1 class="glitch" data-text="CORRUPTED WITNESS AI // CONNECTION ESTABLISHED">CORRUPTED WITNESS AI // CONNECTION ESTABLISHED</h1>
+            <h1 class="glitch" data-text="WITNESS AI // RECOVERY MODE">WITNESS AI // RECOVERY MODE</h1>
             <div class="stats">
                 <span id="questions-left">Questions Remaining: --</span> | 
                 <span id="hints-left">Hints Remaining: --</span> |
