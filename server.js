@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const readline = require('readline');
 const cases = require('./cases');
 
 dotenv.config();
@@ -15,30 +14,6 @@ app.use(express.static('public'));
 const sessions = {};
 const pendingRequests = new Set();
 const approvedUsers = new Set();
-
-// Set up CLI admin interface
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-rl.on('line', (input) => {
-  const parts = input.trim().split(' ');
-  if (parts.length === 2 && parts[0].toLowerCase() === 'approve') {
-    const callsign = parts[1];
-    if (pendingRequests.has(callsign)) {
-      pendingRequests.delete(callsign);
-      approvedUsers.add(callsign);
-      console.log(`\n[SUCCESS] Access granted to '${callsign}'. They can now play.\n`);
-    } else {
-      console.log(`\n[ERROR] No pending request found for '${callsign}'.\n`);
-    }
-  } else if (parts[0].toLowerCase() === 'deny') {
-      const callsign = parts[1];
-      pendingRequests.delete(callsign);
-      console.log(`\n[DENIED] Request from '${callsign}' was rejected.\n`);
-  }
-});
 
 // We will communicate with the local Ollama instance on port 11434
 const OLLAMA_URL = 'http://127.0.0.1:11434/api/chat';
@@ -87,12 +62,7 @@ app.post('/api/request-access', (req, res) => {
   }
 
   pendingRequests.add(cleanSign);
-  console.log(`\n======================================================`);
-  console.log(`[ADMIN ALERT] New connection request from: ${cleanSign}`);
-  console.log(`-> To authorize this player, type in this terminal:`);
-  console.log(`   approve ${cleanSign}`);
-  console.log(`-> To deny, type: deny ${cleanSign}`);
-  console.log(`======================================================\n`);
+  console.log(`\n[ADMIN ALERT] New connection request from: ${cleanSign}. Check dashboard at /admin.html to approve.\n`);
   
   res.json({ status: 'pending', cleanSign });
 });
@@ -107,6 +77,33 @@ app.get('/api/check-access', (req, res) => {
   } else {
       res.json({ status: 'denied' });
   }
+});
+
+// Admin Dashboard Routes
+app.get('/api/admin/requests', (req, res) => {
+    res.json({
+        pending: Array.from(pendingRequests),
+        approved: Array.from(approvedUsers)
+    });
+});
+
+app.post('/api/admin/approve', (req, res) => {
+    const { callsign } = req.body;
+    if (pendingRequests.has(callsign)) {
+        pendingRequests.delete(callsign);
+        approvedUsers.add(callsign);
+        return res.json({ success: true, message: `Approved ${callsign}` });
+    }
+    res.status(400).json({ error: 'Request not found.' });
+});
+
+app.post('/api/admin/deny', (req, res) => {
+    const { callsign } = req.body;
+    if (pendingRequests.has(callsign)) {
+        pendingRequests.delete(callsign);
+        return res.json({ success: true, message: `Denied ${callsign}` });
+    }
+    res.status(400).json({ error: 'Request not found.' });
 });
 
 app.post('/api/start', async (req, res) => {

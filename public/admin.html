@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Witness AI // Admin Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #bbbbbb;
+            --accent-color: #00ffcc;
+            --error-color: #ff3333;
+            --border-color: #333333;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed var(--error-color);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--error-color);
+            letter-spacing: 2px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .column {
+            background: #0a0a0a;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            min-height: 400px;
+        }
+
+        h2 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .pending-title { color: #ff9900; }
+        .approved-title { color: var(--accent-color); }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #111;
+            border-left: 3px solid #333;
+        }
+
+        .pending-item { border-left-color: #ff9900; }
+        .approved-item { border-left-color: var(--accent-color); }
+
+        .callsign {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: transparent;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 8px 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-approve {
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+        .btn-approve:hover {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .btn-deny {
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+        .btn-deny:hover {
+            background: var(--error-color);
+            color: #fff;
+            box-shadow: 0 0 10px var(--error-color);
+        }
+
+        .empty-state {
+            color: #555;
+            text-align: center;
+            font-style: italic;
+            margin-top: 50px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Control Panel</h1>
+        <p>Access requests for the Corrupted Witness AI core.</p>
+    </div>
+
+    <div class="dashboard">
+        <!-- Pending Column -->
+        <div class="column">
+            <h2 class="pending-title">PENDING REQUESTS</h2>
+            <ul id="pending-list">
+                <div class="empty-state">Loading...</div>
+            </ul>
+        </div>
+
+        <!-- Approved Column -->
+        <div class="column">
+            <h2 class="approved-title">ACTIVE DETECTIVES</h2>
+            <ul id="approved-list">
+                <div class="empty-state">Loading...</div>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const pendingList = document.getElementById('pending-list');
+        const approvedList = document.getElementById('approved-list');
+
+        async function fetchDashboard() {
+            try {
+                const res = await fetch('/api/admin/requests');
+                const data = await res.json();
+                renderDashboard(data.pending, data.approved);
+            } catch (e) {
+                console.error("Failed to fetch dashboard data", e);
+            }
+        }
+
+        function renderDashboard(pending, approved) {
+            // Render Pending
+            if (pending.length === 0) {
+                pendingList.innerHTML = '<div class="empty-state">No pending access requests.</div>';
+            } else {
+                pendingList.innerHTML = pending.map(callsign => `
+                    <li class="pending-item">
+                        <span class="callsign">${callsign}</span>
+                        <div class="actions">
+                            <button class="btn-approve" onclick="actionRequest('${callsign}', 'approve')">Approve</button>
+                            <button class="btn-deny" onclick="actionRequest('${callsign}', 'deny')">Deny</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            // Render Approved
+            if (approved.length === 0) {
+                approvedList.innerHTML = '<div class="empty-state">No active connections.</div>';
+            } else {
+                approvedList.innerHTML = approved.map(callsign => `
+                    <li class="approved-item">
+                        <span class="callsign">${callsign}</span>
+                        <div class="actions">
+                            <button class="btn-deny" onclick="actionRequest('${callsign}', 'deny')">Revoke</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        async function actionRequest(callsign, action) {
+            try {
+                await fetch(`/api/admin/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ callsign })
+                });
+                fetchDashboard(); // Refresh immediately
+            } catch (e) {
+                console.error(`Status ${action} failed`, e);
+            }
+        }
+
+        // Poll every 3 seconds
+        fetchDashboard();
+        setInterval(fetchDashboard, 3000);
+    </script>
+</body>
+</html>
