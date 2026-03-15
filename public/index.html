@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrupted Witness AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="terminal-container">
+        <header class="terminal-header">
+            <h1 class="glitch" data-text="CORRUPTED WITNESS AI // CONNECTION ESTABLISHED">CORRUPTED WITNESS AI // CONNECTION ESTABLISHED</h1>
+            <div class="stats">
+                <span id="questions-left">Questions Remaining: --</span> | 
+                <span id="hints-left">Hints Remaining: --</span> |
+                <span id="score-display">Score: 100</span> |
+                <span><button id="sound-btn" class="special-btn">SOUND: OFF</button></span> |
+                <span><button id="hint-btn">REQUEST HINT</button></span>
+            </div>
+            <div class="instructions">
+                Type <strong>FINAL ANSWER</strong> followed by Victim, Killer, Weapon, Location, Time, and Motive.
+            </div>
+        </header>
+        
+        <div id="chat-box" class="chat-box">
+            <!-- Messages will appear here -->
+        </div>
+        
+        <div id="processing-indicator" class="processing" style="display: none;">
+            Processing <span class="blink">///</span>
+        </div>
+
+        <div class="input-area" id="standard-input-area">
+            <span class="prompt">></span>
+            <input type="text" id="user-input" placeholder="Enter your query... (e.g. What did you see?)" autocomplete="off" autofocus>
+            <button id="send-btn">TRANSMIT</button>
+            <button id="toggle-final-btn" class="special-btn">SUBMIT FINAL</button>
+        </div>
+
+        <div class="input-area final-area" id="final-input-area" style="display: none;">
+            <div class="final-form">
+                <input type="text" id="final-victim" placeholder="Victim Name" autocomplete="off">
+                <input type="text" id="final-killer" placeholder="Killer Name" autocomplete="off">
+                <input type="text" id="final-weapon" placeholder="Weapon" autocomplete="off">
+                <input type="text" id="final-location" placeholder="Location" autocomplete="off">
+                <input type="text" id="final-time" placeholder="Time" autocomplete="off">
+                <input type="text" id="final-motive" placeholder="Motive" autocomplete="off">
+                <div class="final-actions">
+                    <button id="cancel-final-btn">CANCEL</button>
+                    <button id="submit-final-btn" class="special-btn">SUBMIT DOSSIER</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="dossier-modal" class="dossier-modal" style="display: none;">
+        <div class="dossier-content">
+            <h2 class="dossier-title">CLASSIFIED DOSSIER // CASE CLOSED</h2>
+            <div class="dossier-grid">
+                <div class="eval-box">
+                    <h3>EVALUATION</h3>
+                    <ul id="dossier-evaluations">
+                    </ul>
+                </div>
+                <div class="score-box">
+                    <h3>FINAL SCORE: <span id="dossier-score"></span></h3>
+                    <h3 class="grade-text">GRADE: <span id="dossier-grade"></span></h3>
+                </div>
+            </div>
+            <div class="true-story-box">
+                <h3>THE TRUE STORY</h3>
+                <p id="dossier-story"></p>
+            </div>
+            <button id="close-dossier-btn" class="special-btn" onclick="location.reload()">REBOOT SYSTEM (NEW GAME)</button>
+        </div>
+    </div>
+    <script src="audio.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
